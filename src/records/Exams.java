@@ -1,15 +1,19 @@
 package records;
 
+
+import java.util.Scanner;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.time.LocalDate;
-import java.util.Scanner;
+
 
 abstract class ExamDetailsParams {
-    abstract void display();
     abstract void addMarks();
+
     abstract void result();
 }
+
+
 class ExamDetails extends ExamDetailsParams {
     static Scanner in = new Scanner(System.in);
     LocalDate date = null;
@@ -27,30 +31,20 @@ class ExamDetails extends ExamDetailsParams {
         System.out.print("\n@[STUDENT REGISTRATION]\n");
         this.students = new Students(courses);
         students.addStudents();
-        // display();
     }
 
-    void display() {
-        System.out.println();
-        System.out.print("Date : " + date);
-        System.out.println("\tVenue : " + venue);
-        Courses.display(courses);
-        Students.display(students);
-    }
-
+    // ADD MARKS FOR EXAMS, then pass to the Students addMarks
     void addMarks() {
-        if(students.marksAdded) {
-            System.out.println("MARKS ALREADY ADDED !");
+        if (students.marksAdded) {
+            System.out.println("\nMARKS ALREADY ADDED !");
             System.out.print("  1. UPDATE MARKS    0. ABORT AND GO BACK $(Your Choice) => ");
             char ch = in.next().charAt(0);
-            if(ch != '1') {
-                return;
-            }
+            if (ch != '1') return;
         }
-        students.students.forEach((StudentDetails s)-> {
+        students.students.forEach((StudentDetails s) -> {
             System.out.println("\n# STUDENT'S NAME => " + s.name);
             HashMap<String, Float> temp_map = new HashMap<>();
-            courses.courses.forEach((k, v)-> {
+            courses.courses.forEach((k, v) -> {
                 System.out.print("$ MARKS IN " + k + " (out of 100) => ");
                 float mark = in.nextFloat();
                 temp_map.put(k, mark);
@@ -59,106 +53,124 @@ class ExamDetails extends ExamDetailsParams {
         });
         students.marksAdded = true;
     }
-    void result(){
-        if(students.marksAdded == false) {
-            System.out.println("MARKS IS NOT ADDED for this Exam ");
-            System.out.print("DO YOU WANT TO ADD MARKS NOW ? $(Your CHoice y/n) => ");
+
+    /* Display result, First check marks added or not, if added then display else ask to
+       add marks for the exam*/
+    void result() {
+        if (students.marksAdded == false) {
+            System.out.println("YOU DIDN'T ADD MARKS FOR THIS EXAM ");
+            System.out.print("DO YOU WANT TO ADD MARKS NOW ? $(Your Choice y/n) => ");
             char ch = in.next().charAt(0);
-            if(ch == 'y') {
-                addMarks();
-            }
-            else    return;
+            if (ch == 'y') addMarks();
+            else return;
         }
         System.out.println("\n# EXAM REPORT : ");
-        students.students.forEach((StudentDetails s)-> {
-            s.result(courses.courses);
-        });
+        students.students.forEach((StudentDetails s) -> s.result(courses.courses));
     }
 }
 
+
 interface ExamParams {
     boolean isPresent(LocalDate date);
+
     int size();
+
     void addDate(LocalDate date);
-    void listAll(boolean upcomming, LocalDate date);
+
+    void listAll(boolean upcoming, LocalDate date);
+
     LocalDate getDate(int i);
+
     String getVenue(int i);
+
     void getCourses(int i);
+
     void addMarks(int i);
+
     void result(int i);
 }
-// singleton class
-public class Exams implements ExamParams{
+
+
+// Exams class -> singleton class
+// Stores the list of all the exams and their details
+public class Exams implements ExamParams {
     // class object -> singleton
     private static Exams singleton = null;
+
     private Exams() {
         exams = new ArrayList<>();
     }
+
     public static Exams getInstance() {
         if (singleton == null)
             singleton = new Exams();
         return singleton;
     }
 
-    public ArrayList<ExamDetails> exams;
-    // is the passed exam already added
+    public ArrayList<ExamDetails> exams;  // list of all available exams
+
+    // check for any available exam on the passed date
     public boolean isPresent(LocalDate date) {
-        for(ExamDetails o : exams) {
-            if(o.date.isEqual(date))  return true;
-        }
+        for (ExamDetails o : exams)
+            if (o.date.isEqual(date)) return true;
+
         return false;
     }
+
     // return size of number of exams
     public int size() {
         return exams.size();
     }
-    // add new new exam
+
+    // add NEW EXAM
     public void addDate(LocalDate date) {
-        if(exams.size() == 0 || exams.get(exams.size() - 1).date.isBefore(date))
+        if (exams.size() == 0 || exams.get(exams.size() - 1).date.isBefore(date))
             exams.add(new ExamDetails(date));
         else {
             int i = 0;
-            for(i = 0; exams.get(i).date.isBefore(date) && i < exams.size(); i++);
+            for (i = 0; exams.get(i).date.isBefore(date) && i < exams.size(); i++) ;
             exams.add(i, new ExamDetails(date));
         }
     }
-    // list all exams
-    public void listAll(boolean upcomming, LocalDate date) {
-        if(upcomming) {
-            boolean present = false;
+
+    // list all exams to display all available and past exams
+    public void listAll(boolean upcoming, LocalDate date) {
+        boolean present = false;
+        if (upcoming) {
             for (int i = 0; i < exams.size(); i++) {
-                if(exams.get(i).date.isAfter(date) || exams.get(i).date.isEqual(date)) {
+                if (exams.get(i).date.isAfter(date) || exams.get(i).date.isEqual(date)) {
                     System.out.println("    " + (i + 1) + ". " + exams.get(i).date);
                     present = true;
                 }
             }
-            if(!present)
-                System.out.println("  + NO UPCOMMING EXAMS");
-        }
-        else {
-            boolean present = false;
+            if (!present) System.out.println("  + NO UPCOMMING EXAMS");
+        } else {
             for (int i = 0; i < exams.size(); i++) {
-                if(exams.get(i).date.isBefore(date)) {
+                if (exams.get(i).date.isBefore(date)) {
                     System.out.println("    " + (i + 1) + ". " + exams.get(i).date);
                     present = true;
                 }
             }
-            if (!present)
-                System.out.println("  + NO PAST EXAMS");
+            if (!present) System.out.println("  + NO PAST EXAMS");
         }
     }
+
     public LocalDate getDate(int i) {
         return exams.get(i).date;
     }
+
     public String getVenue(int i) {
         return exams.get(i).venue;
     }
+
     public void getCourses(int i) {
         Courses.display(exams.get(i).courses);
     }
-    public void addMarks(int i){
+
+    public void addMarks(int i) {
         exams.get(i).addMarks();
     }
+
     public void result(int i) {
         exams.get(i).result();
     }
